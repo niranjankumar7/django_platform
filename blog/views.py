@@ -1,6 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.contrib.auth.mixins import LoginRequiredMixin,UserPassesTestMixin
 from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse
 from .models import Post
 from django.views.generic import ListView,DetailView,CreateView,UpdateView,DeleteView
 
@@ -23,24 +25,28 @@ class PostDetailView(DetailView):
 
 class PostCreateView(LoginRequiredMixin,CreateView):
 	model=Post
-	fields=['title','content']
+	fields=['title','content','file']
 
-	def form_valid(self,form):
-		form.instance.author=self.request.user
-		return super().form_valid(form)
+	def form_valid(self, form):
+		form.instance.author = self.request.user
+		post = form.save(commit=False)
+		post.save()
+		return redirect('blog-about')
 
 class PostUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
 	model=Post
-	fields=['title','content']
+	fields=['title','content','file']
 
-	def form_valid(self,form):
-		form.instance.author=self.request.user
-		return super().form_valid(form)
+	def form_valid(self, form):
+		form.instance.author = self.request.user
+		post = form.save(commit=False)
+		post.save()
+		return redirect('blog-about')
 	def test_func(self):
 		post=self.get_object()
 		if self.request.user== post.author:
 			return True
-		return False
+		return False	
 class PostDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
 	model=Post	
 	success_url='/'
@@ -48,6 +54,6 @@ class PostDeleteView(LoginRequiredMixin,UserPassesTestMixin,DeleteView):
 		post=self.get_object()
 		if self.request.user== post.author:
 			return True
-		return False			
+		return False				
 def about(request):
 	return render(request,'blog/about.html',{'title':'about'})
